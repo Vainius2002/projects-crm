@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Projects{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Projects</h1>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('projects.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> New Project
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if projects %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Client Brand</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Campaigns</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in projects %}
+                    <tr>
+                        <td><strong>{{ project.code }}</strong></td>
+                        <td>{{ project.name }}</td>
+                        <td>{{ project.client_brand_name }}</td>
+                        <td>{{ project.start_date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ project.end_date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ project.campaigns.count() }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if project.status == 'active' else 'secondary' }}">
+                                {{ project.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('projects.view', id=project.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                            <a href="{{ url_for('projects.edit', id=project.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">No projects yet. <a href="{{ url_for('projects.create') }}">Create your first project</a></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
