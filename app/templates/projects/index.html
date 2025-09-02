@@ -39,7 +39,7 @@
                         <td>{{ project.client_brand_name }}</td>
                         <td>{{ project.start_date.strftime('%Y-%m-%d') }}</td>
                         <td>{{ project.end_date.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ project.campaigns.count() }}</td>
+                        <td>{{ project.campaigns|length }}</td>
                         <td>
                             <span class="badge bg-{{ 'success' if project.status == 'active' else 'secondary' }}">
                                 {{ project.status }}

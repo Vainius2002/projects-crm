@@ -63,7 +63,7 @@
                 </a>
             </div>
             <div class="card-body">
-                {% if project.campaigns.all() %}
+                {% if project.campaigns %}
                 <div class="table-responsive">
                     <table class="table">
                         <thead>
@@ -83,7 +83,7 @@
                                 <td>{{ campaign.name }}</td>
                                 <td>{{ campaign.start_date.strftime('%Y-%m-%d') }}</td>
                                 <td>{{ campaign.end_date.strftime('%Y-%m-%d') }}</td>
-                                <td>{{ campaign.plans.count() }}</td>
+                                <td>{{ campaign.plans|length }}</td>
                                 <td>
                                     <a href="{{ url_for('campaigns.view', id=campaign.id) }}" class="btn btn-sm btn-outline-primary">View</a>
                                 </td>
@@ -105,7 +105,7 @@
                 <h5 class="mb-0">Statistics</h5>
             </div>
             <div class="card-body">
-                <p><strong>Total Campaigns:</strong> {{ project.campaigns.count() }}</p>
+                <p><strong>Total Campaigns:</strong> {{ project.campaigns|length }}</p>
                 <p><strong>Created:</strong> {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
                 <p><strong>Last Updated:</strong> {{ project.updated_at.strftime('%Y-%m-%d %H:%M') }}</p>
             </div>

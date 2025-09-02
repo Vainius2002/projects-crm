@@ -19,7 +19,7 @@ def create(project_id):
         flash('You do not have permission to add campaigns to this project.', 'danger')
         return redirect(url_for('projects.view', id=project_id))
     
-    form = CampaignForm()
+    form = CampaignForm(project=project)
     
     if form.validate_on_submit():
         campaign = Campaign(
@@ -51,7 +51,7 @@ def edit(id):
         flash('You do not have permission to edit this campaign.', 'danger')
         return redirect(url_for('campaigns.view', id=id))
     
-    form = CampaignForm(obj=campaign)
+    form = CampaignForm(project=campaign.project, obj=campaign)
     
     if form.validate_on_submit():
         campaign.name = form.name.data

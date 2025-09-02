@@ -8,7 +8,7 @@ import json
 import time
 
 # Configuration
-AGENCY_CRM_URL = "http://localhost:5001/api"
+AGENCY_CRM_URL = "http://localhost:5000/api"
 PROJECTS_CRM_URL = "http://localhost:5002/api"
 API_KEY = "dev-api-key"
 WEBHOOK_SECRET = "shared-secret-key"
@@ -35,7 +35,7 @@ def test_api_endpoints():
     except requests.exceptions.ConnectionError as e:
         print(f"❌ Connection error: {e}")
         print("Make sure both applications are running:")
-        print("  Agency CRM: http://localhost:5001")
+        print("  Agency CRM: http://localhost:5000")
         print("  Projects CRM: http://localhost:5002")
         return False
     except Exception as e:
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     print("\n" + "=" * 50)
     print("✅ Integration test completed!")
     print("\nTo test manually:")
-    print("1. Start agency-crm on port 5001")
+    print("1. Start agency-crm on port 5000")
     print("2. Start projects-crm on port 5002") 
     print("3. Create a user in agency-crm")
     print("4. Try logging into projects-crm with the same credentials")

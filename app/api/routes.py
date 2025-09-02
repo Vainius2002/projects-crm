@@ -1,6 +1,6 @@
 from flask import request, jsonify
 from app.api import bp
-from app.models import User
+from app.models import User, Project, Campaign
 from app import db
 from functools import wraps
 
@@ -10,6 +10,15 @@ def require_webhook_secret(f):
         webhook_secret = request.headers.get('X-Webhook-Secret')
         if not webhook_secret or webhook_secret != 'shared-secret-key':
             return jsonify({'error': 'Invalid webhook secret'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+def require_api_key(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_key = request.headers.get('X-API-Key')
+        if not api_key or api_key != 'projects-api-key':
+            return jsonify({'error': 'Invalid API key'}), 401
         return f(*args, **kwargs)
     return decorated_function
 
@@ -93,6 +102,94 @@ def webhook_user_deleted():
             db.session.commit()
         
         return jsonify({'message': 'User deactivated successfully'}), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/campaigns', methods=['GET'])
+@require_api_key
+def get_campaigns():
+    """Get all active campaigns"""
+    try:
+        campaigns = Campaign.query.join(Project).filter(
+            Campaign.status == 'active'
+        ).all()
+        
+        campaign_list = []
+        for campaign in campaigns:
+            campaign_list.append({
+                'id': campaign.id,
+                'code': campaign.code,
+                'name': campaign.name,
+                'project_id': campaign.project_id,
+                'project_name': campaign.project.name,
+                'project_code': campaign.project.code,
+                'client_brand_id': campaign.project.client_brand_id,
+                'client_brand_name': campaign.project.client_brand_name,
+                'start_date': campaign.start_date.isoformat(),
+                'end_date': campaign.end_date.isoformat(),
+                'overall_info': campaign.overall_info,
+                'status': campaign.status,
+                'created_at': campaign.created_at.isoformat()
+            })
+        
+        return jsonify(campaign_list), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/campaigns/<int:campaign_id>', methods=['GET'])
+@require_api_key
+def get_campaign(campaign_id):
+    """Get specific campaign by ID"""
+    try:
+        campaign = Campaign.query.get_or_404(campaign_id)
+        
+        campaign_data = {
+            'id': campaign.id,
+            'code': campaign.code,
+            'name': campaign.name,
+            'project_id': campaign.project_id,
+            'project_name': campaign.project.name,
+            'project_code': campaign.project.code,
+            'client_brand_id': campaign.project.client_brand_id,
+            'client_brand_name': campaign.project.client_brand_name,
+            'start_date': campaign.start_date.isoformat(),
+            'end_date': campaign.end_date.isoformat(),
+            'overall_info': campaign.overall_info,
+            'status': campaign.status,
+            'created_at': campaign.created_at.isoformat(),
+            'updated_at': campaign.updated_at.isoformat()
+        }
+        
+        return jsonify(campaign_data), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/projects', methods=['GET'])
+@require_api_key
+def get_projects():
+    """Get all active projects"""
+    try:
+        projects = Project.query.filter(Project.status == 'active').all()
+        
+        project_list = []
+        for project in projects:
+            project_list.append({
+                'id': project.id,
+                'code': project.code,
+                'name': project.name,
+                'client_brand_id': project.client_brand_id,
+                'client_brand_name': project.client_brand_name,
+                'start_date': project.start_date.isoformat(),
+                'end_date': project.end_date.isoformat(),
+                'status': project.status,
+                'created_at': project.created_at.isoformat(),
+                'campaign_count': len(project.campaigns)
+            })
+        
+        return jsonify(project_list), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

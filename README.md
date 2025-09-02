@@ -30,7 +30,7 @@ A project and campaign management system integrated with Agency CRM for user aut
 
 ### 1. Prerequisites
 - Python 3.8+
-- Agency CRM running on port 5001
+- Agency CRM running on port 5000
 - SQLite (included with Python)
 
 ### 2. Installation
@@ -127,7 +127,7 @@ python test_integration.py
    # Terminal 1 - Agency CRM
    cd /home/vainiusl/py_projects/agency-crm
    source venv/bin/activate
-   python run.py  # Runs on port 5001
+   python run.py  # Runs on port 5000
    
    # Terminal 2 - Projects CRM  
    cd /home/vainiusl/py_projects/projects-crm
@@ -136,7 +136,7 @@ python test_integration.py
    ```
 
 2. **Create a test user in Agency CRM:**
-   - Go to `http://localhost:5001`
+   - Go to `http://localhost:5000`
    - Register/create a new user account
 
 3. **Login to Projects CRM:**
@@ -188,7 +188,7 @@ projects-crm/
 ### Common Issues
 
 1. **Connection refused errors:**
-   - Ensure Agency CRM is running on port 5001
+   - Ensure Agency CRM is running on port 5000
    - Check `.env` file configuration
 
 2. **User sync not working:**
