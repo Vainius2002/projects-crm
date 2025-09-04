@@ -3,6 +3,7 @@ from app.api import bp
 from app.models import User, Project, Campaign, Plan
 from app import db
 from functools import wraps
+import requests
 
 def require_webhook_secret(f):
     @wraps(f)
@@ -291,6 +292,60 @@ def get_plan(plan_id):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@bp.route('/campaigns/sync-to-ekranu', methods=['POST'])
+@require_api_key
+def sync_campaigns_to_ekranu():
+    """Send active campaigns to ekranu-crm as kampanijos"""
+    try:
+        # Get all active campaigns with their projects
+        campaigns = Campaign.query.join(Project).filter(
+            Campaign.status == 'active'
+        ).all()
+        
+        # Prepare data for ekranu-crm kampanijos
+        campaigns_data = []
+        for campaign in campaigns:
+            campaigns_data.append({
+                'name': f"{campaign.project.client_brand_name} - {campaign.name}",  # Brand + Campaign name
+                'client_brand_name': campaign.project.client_brand_name,
+                'campaign_name': campaign.name,
+                'external_id': f'projects_campaign_{campaign.id}',  # Unique identifier
+                'source_system': 'projects-crm'
+            })
+        
+        # Send to ekranu-crm kampanijos endpoint
+        ekranu_url = 'http://172.20.89.236:5003/api/import-kampanijos'
+        headers = {
+            'Content-Type': 'application/json',
+            'X-API-Key': 'ekranu-crm-api-key'  # This should match the key in ekranu-crm
+        }
+        
+        response = requests.post(ekranu_url, json={'kampanijos': campaigns_data}, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            result = response.json()
+            return jsonify({
+                'success': True,
+                'message': f'Successfully synced {len(campaigns_data)} campaigns to ekranu-crm',
+                'synced_count': result.get('imported_count', len(campaigns_data))
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Failed to sync campaigns: {response.text}'
+            }), 500
+            
+    except requests.exceptions.RequestException as e:
+        return jsonify({
+            'success': False,
+            'message': f'Connection error to ekranu-crm: {str(e)}'
+        }), 500
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error syncing campaigns: {str(e)}'
+        }), 500
 
 @bp.route('/plans/<int:plan_id>', methods=['DELETE'])
 @require_api_key
