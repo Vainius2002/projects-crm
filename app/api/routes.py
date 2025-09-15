@@ -1,9 +1,11 @@
-from flask import request, jsonify
+from flask import request, jsonify, current_app
+from flask_login import login_user
 from app.api import bp
 from app.models import User, Project, Campaign, Plan
 from app import db
 from functools import wraps
 import requests
+from werkzeug.security import check_password_hash
 
 def require_webhook_secret(f):
     @wraps(f)
@@ -18,10 +20,117 @@ def require_api_key(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         api_key = request.headers.get('X-API-Key')
-        if not api_key or api_key != 'projects-api-key':
+        expected_key = current_app.config.get('API_KEY', 'projects-api-key')
+        if not api_key or api_key != expected_key:
             return jsonify({'error': 'Invalid API key'}), 401
         return f(*args, **kwargs)
     return decorated_function
+
+@bp.route('/sync-user', methods=['POST'])
+@require_api_key
+def sync_user():
+    """Sync a user from my-agency-crm"""
+    try:
+        data = request.get_json()
+
+        if not data or 'email' not in data or 'agency_crm_id' not in data:
+            return jsonify({'error': 'Email and agency_crm_id required'}), 400
+
+        # Check if user already exists
+        existing_user = User.query.filter_by(agency_crm_id=data['agency_crm_id']).first()
+        if existing_user:
+            # Update existing user
+            existing_user.email = data['email']
+            existing_user.first_name = data.get('name', '').split(' ')[0] if data.get('name') else ''
+            existing_user.last_name = ' '.join(data.get('name', '').split(' ')[1:]) if data.get('name') and len(data.get('name', '').split(' ')) > 1 else ''
+            if 'password_hash' in data:
+                existing_user.password_hash = data['password_hash']
+            db.session.commit()
+            return jsonify({'message': 'User updated successfully', 'user_id': existing_user.id}), 200
+
+        # Create new user
+        user = User(
+            email=data['email'],
+            agency_crm_id=data['agency_crm_id'],
+            first_name=data.get('name', '').split(' ')[0] if data.get('name') else '',
+            last_name=' '.join(data.get('name', '').split(' ')[1:]) if data.get('name') and len(data.get('name', '').split(' ')) > 1 else '',
+            password_hash=data.get('password_hash', ''),
+            is_active=True
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        return jsonify({'message': 'User created successfully', 'user_id': user.id}), 201
+
+    except Exception as e:
+        current_app.logger.error(f'Error syncing user: {str(e)}')
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/auth/login-with-agency-crm', methods=['POST'])
+def login_with_agency_crm():
+    """Authenticate user using my-agency-crm credentials"""
+    try:
+        data = request.get_json()
+
+        if not data or 'email' not in data or 'password' not in data:
+            return jsonify({'error': 'Email and password required'}), 400
+
+        # First, verify credentials with my-agency-crm
+        agency_crm_url = current_app.config.get('AGENCY_CRM_URL', 'http://localhost:5000')
+        agency_crm_api_key = current_app.config.get('AGENCY_CRM_API_KEY', 'dev-api-key-change-in-production')
+
+        headers = {
+            'X-API-Key': agency_crm_api_key,
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.post(
+            f'{agency_crm_url}/api/authenticate',
+            json={'email': data['email'], 'password': data['password']},
+            headers=headers,
+            timeout=5
+        )
+
+        if response.status_code != 200:
+            return jsonify({'error': 'Invalid credentials'}), 401
+
+        agency_user = response.json().get('user')
+
+        # Find or create local user
+        user = User.query.filter_by(agency_crm_id=agency_user['id']).first()
+        if not user:
+            # Create user locally
+            user = User(
+                email=agency_user['email'],
+                agency_crm_id=agency_user['id'],
+                first_name=agency_user.get('name', '').split(' ')[0] if agency_user.get('name') else '',
+                last_name=' '.join(agency_user.get('name', '').split(' ')[1:]) if agency_user.get('name') and len(agency_user.get('name', '').split(' ')) > 1 else '',
+                is_active=True
+            )
+            # Don't set password_hash since we're authenticating via API
+            db.session.add(user)
+            db.session.commit()
+
+        # Log the user in to projects-crm
+        login_user(user)
+
+        return jsonify({
+            'success': True,
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name
+            }
+        }), 200
+
+    except requests.exceptions.RequestException as e:
+        current_app.logger.error(f'Error connecting to agency-crm: {str(e)}')
+        return jsonify({'error': 'Unable to verify credentials'}), 503
+    except Exception as e:
+        current_app.logger.error(f'Error during authentication: {str(e)}')
+        return jsonify({'error': 'Authentication failed'}), 500
 
 @bp.route('/webhooks/user_created', methods=['POST'])
 @require_webhook_secret
