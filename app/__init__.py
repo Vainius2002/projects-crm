@@ -16,7 +16,7 @@ def create_app(config_class=Config):
     # Enable CORS for API endpoints
     CORS(app, resources={
         r"/api/*": {
-            "origins": ["http://localhost:5003", "http://172.20.89.236:5003"],
+            "origins": ["http://localhost:5003"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "X-API-Key"]
         }
