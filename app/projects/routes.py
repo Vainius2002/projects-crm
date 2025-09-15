@@ -18,14 +18,14 @@ def create():
     form = ProjectForm()
     
     brands = AgencyCRMService.get_brands()
-    form.client_brand_id.choices = [(0, 'Select a brand')] + [(b['id'], b['name']) for b in brands]
+    form.client_brand_id.choices = [(0, 'Select a brand')] + [(b['id'], b['full_name']) for b in brands]
     
     if form.validate_on_submit():
         project = Project(
             code=Project.generate_project_code(),
             name=form.name.data,
             client_brand_id=form.client_brand_id.data,
-            client_brand_name=next((b['name'] for b in brands if b['id'] == form.client_brand_id.data), ''),
+            client_brand_name=next((b['full_name'] for b in brands if b['id'] == form.client_brand_id.data), ''),
             start_date=form.start_date.data,
             end_date=form.end_date.data,
             comments=form.comments.data,
@@ -56,12 +56,12 @@ def edit(id):
     form = ProjectForm(obj=project)
     
     brands = AgencyCRMService.get_brands()
-    form.client_brand_id.choices = [(0, 'Select a brand')] + [(b['id'], b['name']) for b in brands]
+    form.client_brand_id.choices = [(0, 'Select a brand')] + [(b['id'], b['full_name']) for b in brands]
     
     if form.validate_on_submit():
         project.name = form.name.data
         project.client_brand_id = form.client_brand_id.data
-        project.client_brand_name = next((b['name'] for b in brands if b['id'] == form.client_brand_id.data), '')
+        project.client_brand_name = next((b['full_name'] for b in brands if b['id'] == form.client_brand_id.data), '')
         project.start_date = form.start_date.data
         project.end_date = form.end_date.data
         project.comments = form.comments.data

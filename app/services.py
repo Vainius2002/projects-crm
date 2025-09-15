@@ -11,9 +11,14 @@ class AgencyCRMService:
             url = f"{current_app.config['AGENCY_CRM_API_URL']}/brands"
             headers = {'X-API-Key': current_app.config['AGENCY_CRM_API_KEY']}
             response = requests.get(url, headers=headers, timeout=10)
-            
+
             if response.status_code == 200:
-                return response.json()
+                data = response.json()
+                brands = data.get('brands', [])
+                current_app.logger.info(f"Fetched {len(brands)} brands from agency-crm")
+                return brands
+            else:
+                current_app.logger.error(f"Error fetching brands: HTTP {response.status_code} - {response.text}")
             return []
         except Exception as e:
             current_app.logger.error(f"Error fetching brands: {str(e)}")
