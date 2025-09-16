@@ -423,8 +423,8 @@ def sync_campaigns_to_ekranu():
                 'source_system': 'projects-crm'
             })
         
-        # Send to ekranu-crm kampanijos endpoint
-        ekranu_url = 'http://172.20.89.236:5003/api/import-kampanijos'
+        # Send to ekranu-crm kampanijos endpoint using localhost
+        ekranu_url = 'http://localhost:5003/api/import-kampanijos'
         headers = {
             'Content-Type': 'application/json',
             'X-API-Key': 'ekranu-crm-api-key'  # This should match the key in ekranu-crm

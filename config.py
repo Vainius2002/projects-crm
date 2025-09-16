@@ -15,6 +15,6 @@ class Config:
     AGENCY_CRM_API_KEY = os.environ.get('AGENCY_CRM_API_KEY', '')
 
     # API Configuration
-    API_KEY = os.environ.get('API_KEY', 'projects-crm-api-key')
+    API_KEY = os.environ.get('API_KEY', 'projects-crm-api-key-change-in-production')
     AGENCY_CRM_URL = os.environ.get('AGENCY_CRM_URL', 'http://localhost:5001')
-    AGENCY_CRM_API_KEY = os.environ.get('AGENCY_CRM_API_KEY', 'dev-api-key-change-in-production')
+    AGENCY_CRM_API_KEY = os.environ.get('AGENCY_CRM_API_KEY', 'my-agency-crm-api-key-change-in-production')
