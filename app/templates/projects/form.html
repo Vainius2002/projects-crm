@@ -71,4 +71,56 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const brandSelect = document.getElementById('client_brand_id');
+    let brandsLoaded = false;
+
+    if (brandSelect) {
+        // Refresh brands when dropdown is clicked/focused
+        brandSelect.addEventListener('focus', function() {
+            if (!brandsLoaded) {
+                refreshBrands();
+            }
+        });
+
+        brandSelect.addEventListener('click', function() {
+            refreshBrands();
+        });
+    }
+
+    function refreshBrands() {
+        const currentValue = brandSelect.value;
+
+        fetch('/api/brands')
+            .then(response => response.json())
+            .then(data => {
+                if (data.brands) {
+                    // Clear current options except the first one
+                    brandSelect.innerHTML = '<option value="0">Select a brand</option>';
+
+                    // Add new options
+                    data.brands.forEach(brand => {
+                        const option = document.createElement('option');
+                        option.value = brand.id;
+                        option.textContent = brand.full_name;
+                        if (brand.id == currentValue) {
+                            option.selected = true;
+                        }
+                        brandSelect.appendChild(option);
+                    });
+
+                    brandsLoaded = true;
+                    console.log(`Loaded ${data.brands.length} brands from agency-crm`);
+                } else {
+                    console.error('No brands data received');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading brands:', error);
+            });
+    }
+});
+</script>
 {% endblock %}

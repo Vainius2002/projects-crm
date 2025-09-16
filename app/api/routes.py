@@ -77,7 +77,7 @@ def login_with_agency_crm():
             return jsonify({'error': 'Email and password required'}), 400
 
         # First, verify credentials with my-agency-crm
-        agency_crm_url = current_app.config.get('AGENCY_CRM_URL', 'http://localhost:5000')
+        agency_crm_url = current_app.config.get('AGENCY_CRM_URL', 'http://91.99.165.20:5001')
         agency_crm_api_key = current_app.config.get('AGENCY_CRM_API_KEY', 'dev-api-key-change-in-production')
 
         headers = {
@@ -423,8 +423,8 @@ def sync_campaigns_to_ekranu():
                 'source_system': 'projects-crm'
             })
         
-        # Send to ekranu-crm kampanijos endpoint using localhost
-        ekranu_url = 'http://localhost:5003/api/import-kampanijos'
+        # Send to ekranu-crm kampanijos endpoint using server IP
+        ekranu_url = 'http://91.99.165.20:5003/api/import-kampanijos'
         headers = {
             'Content-Type': 'application/json',
             'X-API-Key': 'ekranu-crm-api-key'  # This should match the key in ekranu-crm
@@ -516,6 +516,17 @@ def delete_plan_by_name(campaign_id, plan_name):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@bp.route('/brands', methods=['GET'])
+def get_brands():
+    """Get all brands from agency-crm (no API key required for internal use)"""
+    from app.services import AgencyCRMService
+    try:
+        brands = AgencyCRMService.get_brands()
+        return jsonify({'brands': brands}), 200
+    except Exception as e:
+        current_app.logger.error(f'Error fetching brands: {str(e)}')
+        return jsonify({'error': 'Failed to fetch brands'}), 500
 
 @bp.route('/plans/<int:plan_id>', methods=['PATCH'])
 @require_api_key
